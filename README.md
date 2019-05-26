@@ -2,6 +2,10 @@
 
 Developed to find patterns very quickly inside dll files
 
+### Limitations
+
+Sigs are always 18 bytes are not checked to be unique
+
 ### Example code to parse sig (C++)
 
 ```
