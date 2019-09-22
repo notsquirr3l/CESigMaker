@@ -1,11 +1,11 @@
 #ifndef _LOADER_H_
 #define _LOADER_H_
 
-#include <windows.h>
+#include <Windows.h>
 
 #include <iostream>
 #include <string>
-#include <iomanip> 
+#include <iomanip>
 #include <sstream>
 
 #include "cesdk/sdk.h"

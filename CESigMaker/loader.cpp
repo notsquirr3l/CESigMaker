@@ -1,16 +1,13 @@
 #include "loader.h"
 
+#define SIGNATURE_SIZE 18
+
 static CE_EXPORTED_FUNCTIONS exports;
-
-//static int memory_view_tab_pluginid = -1;
-
 static CE_MEMORY_VIEW_PLUGIN_INIT memory_view_tab;
 static CE_DISASSEMBLER_CONTEXT_INIT disassembler_context_option;
 
-static size_t sig_size = 18;
-
 void set_clipboard(const std::string& str) {
-	OpenClipboard(0);
+	OpenClipboard(nullptr);
 	EmptyClipboard();
 	
 	auto buf = GlobalAlloc(GMEM_MOVEABLE, str.size());
@@ -32,12 +29,12 @@ BOOL CE_CONV on_makesig(uintptr_t* selected_address) {
 	std::ostringstream stream;
 	HDE hs;
 
-	auto size = sig_size + 2;
+	auto size = SIGNATURE_SIZE + 2;
 	auto handle = *exports.OpenedProcessHandle;
 	auto buffer = new unsigned char[size];
 
-	std::memset(buffer, 0, sig_size);
-	ReadProcessMemory(handle, reinterpret_cast<void*>(*selected_address - sig_size), buffer, size, nullptr);
+	std::memset(buffer, 0, SIGNATURE_SIZE);
+	ReadProcessMemory(handle, reinterpret_cast<void*>(*selected_address - SIGNATURE_SIZE), buffer, size, nullptr);
 
 	for (int i = 0; i < size; i++) {
 		unsigned char c = buffer[i];
@@ -47,8 +44,10 @@ BOOL CE_CONV on_makesig(uintptr_t* selected_address) {
 		case 0xE8: // call
 		case 0xE9: // jmp
 			i += hs.len;
+			
 			for (int k = 0; k < hs.len; k++)
 				stream << "\\?";
+
 			continue;
 		}
 
@@ -86,16 +85,11 @@ BOOL CE_CONV CEPlugin_GetVersion(CE_PLUGIN_VERSION* version, int version_size) {
 BOOL CE_CONV CEPlugin_InitializePlugin(CE_EXPORTED_FUNCTIONS* ef, int pluginid) {
 	exports = *ef;
 
-	memory_view_tab.name = "SigMaker: Settings";
-	memory_view_tab.callback_routine = on_settings_click;
-	memory_view_tab.shortcut = "Ctrl+E";
-
 	disassembler_context_option.name = "SigMaker: Create signature";
 	disassembler_context_option.callback_routine = &on_makesig;
 	disassembler_context_option.callback_routine_onpopup = &on_rightclick;
 
 	exports.RegisterFunction(pluginid, CE_PLUGIN_TYPE_DISASSEMBLER_CONTEXT, &disassembler_context_option);
-	//memory_view_tab_pluginid = exports.RegisterFunction(pluginid, CE_PLUGIN_TYPE_MEMORY_VIEW, &memory_view_tab); //adds a plugin menu item to the memory view
 
 	return true;
 }
